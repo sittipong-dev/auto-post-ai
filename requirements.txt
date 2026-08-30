@@ -1,0 +1,11 @@
+playwright
+moviepy
+google-generativeai
+edge-tts
+pandas
+python-dotenv
+
+selenium
+ddgs
+pexels_api
+elevenlabs

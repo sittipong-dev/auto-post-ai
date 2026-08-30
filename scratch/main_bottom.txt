@@ -1,0 +1,201 @@
+> def main():
+      print("========================================")
+      print("🚀 เริ่มระบบ Auto Post AI (Smart Fallback Mode)")
+      print("========================================\n")
+      
+      print("เลือกลักษณะคลิปวิดีโอที่ต้องการสร้าง:")
+      print("1. รูปปกเดี่ยว (ภาพนิ่ง 1 ภาพ)")
+      print("2. สไลด์โชว์ 5 ภาพ (ภาพเลื่อน 5 ภาพ)")
+      print("3. 🎥 ดูดวิดีโอต้นฉบับ Shopee (พากย์เสียงทับวิดีโอจริง!)")
+      while True:
+          mode_input = input("👉 พิมพ์ 1, 2 หรือ 3: ").strip()
+          if mode_input in ['1', '2', '3']:
+              if mode_input == '1': image_mode = "single"
+              elif mode_input == '2': image_mode = "slideshow"
+              elif mode_input == '3': image_mode = "video"
+              break
+          print("⚠️ กรุณาพิมพ์ 1, 2 หรือ 3 เท่านั้น")
+      print("\n----------------------------------------")
+      print("เลือกระบบสร้างเสียงพากย์ (TTS Engine):")
+      print("1. 💎 ElevenLabs (พรีเมียมขั้นสุด, เนียน 100%, ใช้ API Key)")
+      print("2. ⚡ Edge-TTS (รวดเร็ว, เบาเครื่อง, เสียงมาตรฐาน)")
+      print("3. 🌟 F5-TTS (พรีเมียม, ธรรมชาติสูง, โคลนนิ่งเสียงได้)")
+      while True:
+          tts_input = input("👉 พิมพ์ 1, 2 หรือ 3: ").strip()
+          if tts_input in ['1', '2', '3']:
+              if tts_input == '1': tts_engine = "elevenlabs"
+              elif tts_input == '2': tts_engine = "edge"
+              elif tts_input == '3': tts_engine = "f5"
+              break
+          print("⚠️ กรุณาพิมพ์ 1, 2 หรือ 3 เท่านั้น")
+      print("\n----------------------------------------")
+      
+      voice_gender = "female"
+      f5_ref_voice = ""
+      
+      if tts_engine == "edge":
+          print("เลือกเสียงพากย์ (Edge-TTS):")
+          print("1. เสียงผู้หญิง (คุณเปรมวดี - นุ่มนวล น่าฟัง)")
+          print("2. เสียงผู้ชาย (คุณนิวัฒน์ - เข้มแข็ง น่าเชื่อถือ)")
+          while True:
+              voice_input = input("👉 พิมพ์ 1 หรือ 2: ").strip()
+              if voice_input in ['1', '2']:
+                  voice_gender = "female" if voice_input == '1' else "male"
+                  break
+              print("⚠️ กรุณาพิมพ์ 1 หรือ 2 เท่านั้น")
+          print("\n----------------------------------------")
+      elif tts_engine == "elevenlabs":
+          print("เลือกเสียงพากย์ (ElevenLabs):")
+          print("1. 👱‍♀️ Alice (ผู้หญิง เสียงใส น่าฟัง ชัดเจน)")
+          print("2. 👦 Liam (ผู้ชาย พลังล้น เหมาะกับป้ายยาคลิปสั้น)")
+          print("3. 🌟 กำหนดรหัสเสียงเอง (Custom Voice ID)")
+          while True:
+              el_input = input("👉 พิมพ์ 1, 2 หรือ 3: ").strip()
+              if el_input == '1': 
+                  f5_ref_voice = "Xb7hH8MSUJpSbSDYk0k2"
+                  voice_gender = "female"
+                  break
+              elif el_input == '2': 
+                  f5_ref_voice = "TX3LPaxmHKxFdv7VOQHJ"
+                  voice_gender = "male"
+                  break
+              elif el_input == '3':
+                  f5_ref_voice = input("👉 วางรหัส Voice ID จากเว็บ ElevenLabs: ").strip()
+                  # Default to female or we can ask, let's assume female for custom
+                  voice_gender = "female"
+                  break
+              print("⚠️ กรุณาพิมพ์ 1, 2 หรือ 3 เท่านั้น")
+          print("\n----------------------------------------")
+      else:
+          print("เลือกเสียงต้นแบบ (F5-TTS Voice Clone):")
+          print("1. 👱‍♀️ เสียงผู้หญิง (สดใส น่ารัก)")
+          print("2. 👩‍💼 เสียงผู้หญิง (ทางการ ผู้ใหญ่)")
+          print("3. 👦 เสียงผู้ชาย (วัยรุ่น น่ารัก)")
+          print("4. 👨‍💼 เสียงผู้ชาย (นุ่มลึก น่าเชื่อถือ)")
+          print("5. 🌟 เสียงกำหนดเอง (Custom Voice - ใช้ไฟล์ที่โหลดมาเอง)")
+          while True:
+              f5_input = input("👉 พิมพ์เลข 1 ถึง 5: ").strip()
+              if f5_input == '1': 
+                  f5_ref_voice = "female_cute.wav"
+                  voice_gender = "female"
+                  break
+              elif f5_input == '2': 
+                  f5_ref_voice = "female_formal.wav"
+                  voice_gender = "female"
+                  break
+              elif f5_input == '3': 
+                  f5_ref_voice = "male_cute.wav"
+                  voice_gender = "male"
+                  break
+              elif f5_input == '4': 
+                  f5_ref_voice = "male_deep.wav"
+                  voice_gender = "male"
+                  break
+              elif f5_input == '5': 
+                  f5_ref_voice = input("👉 พิมพ์ชื่อไฟล์เสียงต้นแบบ (ต้องอยู่ในโฟลเดอร์ assets/voices/ เช่น myvoice.wav): ").strip()
+                  voice_gender = "female"
+                  break
+              print("⚠️ กรุณาพิมพ์เลข 1 ถึง 5 เท่านั้น")
+          print("\n----------------------------------------")
+      
+      print("เลือกอารมณ์และสไตล์การเขียนสคริปต์ (Tone):")
+      print("1. 🤩 ตื่นเต้น ป้ายยาหนักๆ (กระตุ้นให้รีบซื้อ)")
+      print("2. 👔 ทางการ น่าเชื่อถือ (สำหรับสินค้าไฮเอนด์/อิเล็กทรอนิกส์)")
+      print("3. 🤪 วัยรุ่น ตลกๆ กวนๆ (เป็นกันเองสุดๆ)")
+      print("4. 🩺 สายสุขภาพ/ความงาม (อ่อนโยน ห่วงใย ให้คำปรึกษา)")
+      print("5. 🧹 สายแม่บ้าน/ของใช้ (เน้นความคุ้มค่า รีวิวจากการใช้จริง)")
+      print("6. 🔥 สายดุดัน ฮาร์ดคอร์ (ขายแบบตะโกน ดุดันไม่เกรงใจใคร)")
+      print("7. 🥺 สายออดอ้อน (น่ารักๆ อ้อนคนดูให้ซื้อ)")
+      while True:
+          tone_input = input("👉 พิมพ์เลข 1 ถึง 7: ").strip()
+          if tone_input == '1':
+              tone = "ตื่นเต้น ป้ายยาหนักๆ ให้รีบซื้อทันที"
+              break
+          elif tone_input == '2':
+              tone = "ทางการ น่าเชื่อถือ รีวิวแบบผู้เชี่ยวชาญ"
+              break
+          elif tone_input == '3':
+              tone = "วัยรุ่น ตลก กวนๆ เป็นกันเองเหมือนเพื่อนป้ายยาเพื่อน"
+              break
+          elif tone_input == '4':
+              tone = "อ่อนโยน ห่วงใยสุขภาพและความงาม ให้คำปรึกษาแบบใจดี"
+              break
+          elif tone_input == '5':
+              tone = "แม่บ้าน/พ่อบ้าน รีวิวจากการใช้งานจริง เน้นความคุ้มค่า ประหยัดเงิน"
+              break
+          elif tone_input == '6':
+              tone = "ดุดัน ฮาร์ดคอร์ ตะโกนขายแบบจริงจัง พลังเยอะๆ ดุดันไม่เกรงใจใคร"
+              break
+          elif tone_input == '7':
+              tone = "ออดอ้อน น่ารักๆ พูดจาหวานๆ อ้อนให้คนดูใจอ่อนจนต้องกดซื้อ"
+              break
+          print("⚠️ กรุณาพิมพ์เลข 1 ถึง 7 เท่านั้น")
+      print("\n----------------------------------------")
+      
+      print("เลือกระบบเสียง (Audio Mode):")
+      print("1. 🗣️ เสียงพากย์ AI อย่างเดียว")
+      print("2. 🎵 เสียงดนตรีประกอบ (BGM) อย่างเดียว (ไม่มีคนพูด)")
+      print("3. 🗣️+🎵 เสียงพากย์ AI + เสียงดนตรีคลอเบาๆ (15%)")
+      while True:
+          audio_input = input("👉 พิมพ์ 1, 2 หรือ 3: ").strip()
+          if audio_input == '1':
+              audio_mode = "voice_only"
+              break
+          elif audio_input == '2':
+              audio_mode = "bgm_only"
+              break
+          elif audio_input == '3':
+              audio_mode = "voice_and_bgm"
+              break
+          print("⚠️ กรุณาพิมพ์ 1, 2 หรือ 3 เท่านั้น")
+      print("\n----------------------------------------")
+      
+      # โหลดประวัติการโพสต์
+      posted_history = load_history()
+      print(f"📜 ตรวจพบประวัติการทำคลิปแล้ว {len(posted_history)} รายการ")
+      
+      # ระบบหยิบไฟล์ล่าสุดอัตโนมัติ
+      csv_path = get_latest_csv("data")
+      if not csv_path:
+          print(f"❌ ไม่พบไฟล์ .csv ใดๆ ในโฟลเดอร์ data เลย กรุณานำไฟล์มาใส่ก่อนครับ")
+          return
+          
+      print(f"📂 เลือกไฟล์ข้อมูลล่าสุดอัตโนมัติ: {os.path.basename(csv_path)}")
+      try:
+          df = pd.read_csv(csv_path, encoding="utf-8-sig")
+      except UnicodeDecodeError:
+          df = pd.read_csv(csv_path, encoding="cp874")
+      print(f"📋 พบสินค้าในคิวทั้งหมด {len(df)} รายการ\n")
+      
+      success_count = 0
+      total_items = 0
+      
+      for index, row in df.iterrows():
+          # ตรวจสอบว่ามีคอลัมน์ลิงก์ข้อเสนอหรือไม่
+          if 'ลิงก์ข้อเสนอ' not in row or pd.isna(row['ลิงก์ข้อเสนอ']):
+              continue
+              
+          total_items += 1
+          affiliate_url = str(row['ลิงก์ข้อเสนอ']).strip()
+          
+          # เช็คว่าเป็นไฟล์เต็ม หรือไฟล์ทำเอง (มีแค่ลิงก์)
+          has_full_data = ('ชื่อสินค้า' in row and not pd.isna(row['ชื่อสินค้า'])) and ('รหัสสินค้า' in row and not pd.isna(row['รหัสสินค้า']))
+          
+          if has_full_data:
+              # 🟢 เคสปกติ (ไฟล์จัดเต็ม)
+              product_id = str(row['รหัสสินค้า']).strip()
+              if product_id.endswith('.0'): product_id = product_id[:-2]
+              
+              # เช็คประวัติการโพสต์
+              if product_id in posted_history:
+                  print(f"----------------------------------------")
+                  print(f"⏭️ ข้ามคิวที่ {total_items}: สินค้ารหัส {product_id} (เคยโพสต์ลง Facebook ไปแล้ว!)")
+                  continue
+                  
+              product_name = str(row['ชื่อสินค้า'])
+              price = str(row['ราคา']) if 'ราคา' in row and not pd.isna(row['ราคา']) else "ราคาพิเศษ"
+              product_url = str(row['ลิงก์สินค้า']) if 'ลิงก์สินค้า' in row and not pd.isna(row['ลิงก์สินค้า']) else affiliate_url
+          else:
+              # 🟡 เคสรีบด่วน (Smart Fallback) แกะข้อมูลจากลิงก์
+              print(f"----------------------------------------")
+              print(f"🕵️‍♂️ [โหมดนักสืบ] กำลังแกะข้อมูลสินค้าจากลิงก์: {affiliate_url}")
