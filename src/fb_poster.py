@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import re
+import pyperclip
 from playwright.sync_api import sync_playwright
 
 # แก้ปัญหาภาษาไทยใน CMD
@@ -21,14 +22,13 @@ def post_to_facebook(video_path, caption, affiliate_url=None):
         print("❌ ไม่พบโฟลเดอร์คุกกี้ (Profile) กรุณารัน setup_login.py ก่อนครับ")
         return False
         
-    print("🤖 กำลังปลุกบอทนักโพสต์ (รันเบื้องหลังแบบโหมดล่องหน)...")
+    print("🚀 กำลังโหลดบอทโพสต์...")
     
     try:
         with sync_playwright() as p:
-            # รันแบบมองไม่เห็น (Headless=True)
             browser = p.chromium.launch_persistent_context(
                 user_data_dir=profile_dir,
-                headless=True,
+                headless=False,
                 viewport={'width': 1920, 'height': 1080},
                 args=['--disable-blink-features=AutomationControlled']
             )
@@ -46,6 +46,206 @@ def post_to_facebook(video_path, caption, affiliate_url=None):
                 
             print("✅ ยืนยันคุกกี้ใช้งานได้!")
             
+            # ========== โหมดโพสต์ข้อความเฉยๆ (ไม่มีวิดีโอ) ==========
+            if video_path is None:
+                print("📝 โหมดโพสต์ข้อความ...")
+                page.goto("https://www.facebook.com/profile.php", wait_until="domcontentloaded")
+                time.sleep(5)
+                page.keyboard.press("Escape")
+                time.sleep(1)
+                
+                # เปิดกล่องสร้างโพสต์
+                create_post_btn = page.locator("text=คุณกำลังคิดอะไรอยู่")
+                if create_post_btn.count() > 0:
+                    create_post_btn.first.click(force=True)
+                else:
+                    page.keyboard.press("p")
+                time.sleep(4)
+                
+                # วางแคปชั่น (ใช้ JavaScript Paste Event เพื่อกระตุ้น Lexical Editor ให้รับรู้ข้อความ 100%)
+                textbox = page.locator('div[contenteditable="true"]').first
+                textbox.evaluate("""node => {
+                    node.focus();
+                    node.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+                }""")
+                time.sleep(1)
+                
+                # จำลอง Paste Event ที่ Lexical Editor จะรับรู้
+                page.evaluate("""(text) => {
+                    const editor = document.querySelector('div[contenteditable="true"]');
+                    if (!editor) return;
+                    editor.focus();
+                    const dt = new DataTransfer();
+                    dt.setData('text/plain', text);
+                    const pasteEvent = new ClipboardEvent('paste', {
+                        bubbles: true,
+                        cancelable: true,
+                        clipboardData: dt
+                    });
+                    editor.dispatchEvent(pasteEvent);
+                }""", caption)
+                time.sleep(3)
+                
+                # เช็คว่าข้อความถูกวางจริงหรือเปล่า
+                editor_text = page.evaluate("""() => {
+                    const editor = document.querySelector('div[contenteditable="true"]');
+                    return editor ? editor.innerText.trim() : '';
+                }""")
+                
+                if len(editor_text) > 0:
+                    print(f"✅ วางแคปชั่นสำเร็จ! (ความยาว {len(editor_text)} ตัวอักษร)")
+                else:
+                    # ถ้า Paste Event ไม่เวิร์ค ลองใช้ execCommand แทน
+                    print("⚠️ Paste Event ไม่เวิร์ค กำลังลองวิธีสำรอง (execCommand)...")
+                    page.evaluate("""(text) => {
+                        const editor = document.querySelector('div[contenteditable="true"]');
+                        if (!editor) return;
+                        editor.focus();
+                        document.execCommand('insertText', false, text);
+                    }""", caption)
+                    time.sleep(2)
+                    
+                    editor_text2 = page.evaluate("""() => {
+                        const editor = document.querySelector('div[contenteditable="true"]');
+                        return editor ? editor.innerText.trim() : '';
+                    }""")
+                    
+                    if len(editor_text2) > 0:
+                        print(f"✅ วางแคปชั่นสำเร็จด้วยวิธีสำรอง! (ความยาว {len(editor_text2)} ตัวอักษร)")
+                    else:
+                        # วิธีสุดท้าย: ใช้ keyboard.type พิมพ์ทีละตัว (ช้าแต่ชัวร์)
+                        print("⚠️ ลองวิธีสุดท้าย: พิมพ์ทีละตัวอักษร...")
+                        page.keyboard.type(caption, delay=10)
+                        time.sleep(2)
+                        print("✅ พิมพ์แคปชั่นเสร็จแล้ว!")
+                
+                # ถ่ายรูปเช็คว่าข้อความโผล่บนหน้าจอจริงไหม
+                ensure_dir("scratch")
+                screenshot_path = os.path.abspath(os.path.join("scratch", "fb_caption_check.png"))
+                page.screenshot(path=screenshot_path)
+                print(f"📸 ถ่ายรูปหน้าจอหลังวางแคปชั่นเก็บไว้ที่: {screenshot_path}")
+                time.sleep(2)
+                
+                # ปิด Link Preview ที่เฟสบุ๊คเด้งขึ้นมาเมื่อเจอลิงก์ในแคปชั่น (มันจะบังปุ่มถัดไป!)
+                print("🗑️ กำลังปิด Link Preview (ถ้ามี)...")
+                try:
+                    # หาปุ่มลบ/ปิด Link Preview (ไอคอนถังขยะหรือ X)
+                    close_preview = page.locator('div[aria-label="ลบ"], div[aria-label="Remove"], div[aria-label="นำภาพตัวอย่างออก"], div[aria-label="Remove preview"]').first
+                    if close_preview.is_visible(timeout=3000):
+                        close_preview.click(force=True)
+                        print("✅ ปิด Link Preview สำเร็จ!")
+                        time.sleep(2)
+                    else:
+                        # ลองหาปุ่ม X แบบอื่น
+                        trash_btns = page.locator('svg[aria-label="ลบ"], svg[aria-label="Remove"]')
+                        if trash_btns.count() > 0:
+                            trash_btns.first.click(force=True)
+                            print("✅ ปิด Link Preview สำเร็จ (วิธี 2)!")
+                            time.sleep(2)
+                        else:
+                            print("ℹ️ ไม่เจอ Link Preview (อาจจะไม่มี)")
+                except Exception as e:
+                    print(f"ℹ️ ไม่มี Link Preview หรือปิดไม่ได้: {e}")
+                
+                # ฟังก์ชันช่วยคลิกแบบมนุษย์ (ข้ามระบบป้องกันของ React)
+                def human_click(element):
+                    try:
+                        element.scroll_into_view_if_needed()
+                        time.sleep(0.5)
+                        box = element.bounding_box()
+                        if box:
+                            page.mouse.click(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2)
+                            return
+                    except: pass
+                    try: element.click(force=True)
+                    except: element.evaluate("node => node.click()")
+
+                # หากดปุ่ม ถัดไป (Next) ก่อน — กดแค่ครั้งเดียว!
+                print("🚀 กำลังเช็คว่ามีปุ่ม 'ถัดไป' หรือไม่...")
+                next_clicked = False
+                for attempt in range(3):
+                    if next_clicked:
+                        break
+                    all_btns = page.locator("div[role='button'], button")
+                    for i in range(all_btns.count()):
+                        btn = all_btns.nth(i)
+                        try:
+                            if btn.is_visible():
+                                text = btn.inner_text().strip()
+                                label = (btn.get_attribute("aria-label") or "").strip()
+                                if text == "ถัดไป" or label == "ถัดไป" or text == "Next" or label == "Next":
+                                    print("✅ เจอปุ่ม 'ถัดไป' กำลังเอาเมาส์ไปคลิก...")
+                                    human_click(btn)
+                                    next_clicked = True
+                                    time.sleep(5)
+                                    # ถ่ายรูปหลังกดถัดไป
+                                    page.screenshot(path=os.path.abspath(os.path.join("scratch", "fb_after_next.png")))
+                                    print("📸 ถ่ายรูปหลังกดถัดไป → scratch/fb_after_next.png")
+                                    break
+                        except: pass
+                    time.sleep(2)
+
+                # กดปุ่มโพสต์ — หาปุ่มสีฟ้าตัวสุดท้ายที่เขียนว่า "โพสต์" เท่านั้น (ไม่ใช่เมนูที่มีคำว่าโพสต์ปน)
+                print("🚀 กำลังหาปุ่ม 'โพสต์' (ปุ่มสีฟ้าด้านล่าง)...")
+                post_btn = None
+                for _ in range(5):
+                    # วิธี 1: หาปุ่มที่ inner_text ตรงเป๊ะว่า "โพสต์" (ไม่มีคำอื่นปน)
+                    all_btns = page.locator("div[role='button'], button")
+                    for i in range(all_btns.count()):
+                        btn = all_btns.nth(i)
+                        try:
+                            if btn.is_visible():
+                                text = btn.inner_text().strip()
+                                label = (btn.get_attribute("aria-label") or "").strip()
+                                # ต้องตรงเป๊ะๆ ว่า "โพสต์" หรือ "Post" เท่านั้น ห้ามมีคำอื่นปน!
+                                if text in ["โพสต์", "Post"] and len(text) <= 6:
+                                    post_btn = btn  # ไม่ break เพื่อเอาตัวสุดท้าย (ปุ่มล่างสุด)
+                                elif label in ["โพสต์", "Post"] and len(label) <= 6:
+                                    post_btn = btn
+                        except: pass
+                    if post_btn: break
+                    time.sleep(2)
+                    
+                if post_btn:
+                    print("✅ เจอปุ่มโพสต์แล้ว กำลังเอาเมาส์ไปคลิก...")
+                    human_click(post_btn)
+                    print("✅ กดปุ่มโพสต์แล้ว!")
+                    time.sleep(5)
+                    # ถ่ายรูปหลังกดโพสต์
+                    page.screenshot(path=os.path.abspath(os.path.join("scratch", "fb_after_post.png")))
+                    print("📸 ถ่ายรูปหลังกดโพสต์ → scratch/fb_after_post.png")
+                else:
+                    print("⚠️ หาปุ่มโพสต์ไม่เจอ!")
+                    return False
+                
+                # หากดปุ่ม เรียบร้อย (Done) เผื่อมีหน้าต่างยืนยันเด้งขึ้นมา
+                print("🚀 กำลังเช็คว่ามีปุ่ม 'เรียบร้อย' หรือไม่...")
+                done_btn = None
+                for _ in range(3):
+                    all_btns = page.locator("div[role='button'], button")
+                    for i in range(all_btns.count()):
+                        btn = all_btns.nth(i)
+                        try:
+                            if btn.is_visible():
+                                text = btn.inner_text().strip()
+                                label = (btn.get_attribute("aria-label") or "").strip()
+                                if text == "เรียบร้อย" or label == "เรียบร้อย" or text == "Done" or label == "Done":
+                                    done_btn = btn
+                                    break
+                        except: pass
+                    if done_btn: break
+                    time.sleep(2)
+                
+                if done_btn:
+                    print("✅ เจอปุ่ม 'เรียบร้อย' กำลังเอาเมาส์ไปคลิกปิดงาน...")
+                    human_click(done_btn)
+                    time.sleep(3)
+                
+                print("✅ โพสต์ข้อความสำเร็จ!")
+                browser.close()
+                return True
+                
+            # ========== โหมดอัปโหลดวิดีโอ (Reels) ==========
             print("กำลังตรงไปที่หน้า Facebook Reels...")
             page.goto("https://www.facebook.com/reels/create", wait_until="domcontentloaded")
             time.sleep(5)

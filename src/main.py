@@ -201,10 +201,9 @@ def process_single_product(product_id, product_name, price, product_url, affilia
     # -----------------------------------------
     print("\n[4/4] 🚀 กำลังเตรียมโพสต์ลง Facebook Reels...")
     
-    # แคปชั่น (ลบลิงก์ออกเพื่อป้องกันโดนบล็อก + ชี้เป้าไปที่คอมเมนต์)
-    clean_product_name = product_name.split("(รายละเอียด:")[0].strip()
-    caption = f"{clean_product_name}\n\n📍 พิกัดสั่งซื้อราคาพิเศษ: จิ้มดูที่คอมเมนต์แรกด้านล่างได้เลยครับ 👇\n\n(กดลิงก์ในคอมเมนต์เพื่อรับโปรโมชั่นและส่งฟรี)\n\n#ShopeeTH #รีวิวช้อปปี้ #ของดีบอกต่อ #โปรเด็ดอัปเดตทุกวัน"
-    
+    # แคปชั่น (ใส่ลิงก์ตรงๆ ลงไปในโพสต์เลยตามคำสั่ง)
+    clean_product_name = product_name.split("(โค้ด:")[0].strip()
+    caption = f"{clean_product_name}\n\n📍 พิกัดสั่งซื้อราคาพิเศษ กดลิงก์นี้ได้เลยครับ 👇\n👉 {affiliate_url}\n\n(กดลิงก์เพื่อรับโปรโมชั่นและส่งฟรี)\n\n#ShopeeTH #รีวิวช้อปปี้ #ของดีบอกต่อ #โปรเด็ดอัปเดตทุกวัน"
     print(f"\n🎬 วิดีโอพร้อมแล้ว! เชิญตรวจสอบได้ที่: {output_video_path}")
     print(f"📝 แคปชั่นที่จะโพสต์:\n{caption}\n")
     
@@ -391,7 +390,66 @@ def process_broll_mode(tts_engine, voice_gender, f5_ref_voice, visual_source):
     print("========================================")
 
 
+
+def run_coupon_hunter_mode():
+    from coupon_scraper import scrape_coupon_page
+    from ai_gen import generate_coupon_caption
+    from fb_poster import post_to_facebook
+    
+    print("\n--- โหมดนักล่าโปรโมชั่น (Coupon Hunter) ---")
+    print("เลือกวิธีล่าโปรโมชั่น:")
+    print("1. 🤖 บอทหาให้อัตโนมัติ (กวาดหน้าโค้ดส่งฟรี / แคมเปญหลัก)")
+    print("2. 🎯 ป้อนลิงก์เป้าหมายเอง (มีลิงก์แคมเปญพิเศษมาให้)")
+    
+    while True:
+        hunt_mode = input("👉 พิมพ์ 1 หรือ 2: ").strip()
+        if hunt_mode in ['1', '2']:
+            break
+        print("⚠️ กรุณาพิมพ์ 1 หรือ 2 เท่านั้น")
+        
+    if hunt_mode == '1':
+        campaign_url = "https://shopee.co.th/m/avc-fsv-all-vouchers"
+        print(f"\n🔗 เป้าหมายอัตโนมัติ: {campaign_url}")
+    else:
+        campaign_url = input("\n🔗 กรุณาใส่ URL แคมเปญ (ลิงก์ยาว): ").strip()
+        if not campaign_url:
+            print("❌ ต้องระบุ URL")
+            return
+            
+    aff_url = input("💰 กรุณาใส่ลิงก์ Affiliate ของคุณ (s.shopee): ").strip()
+    if not aff_url:
+        aff_url = campaign_url
+        
+    raw_text = scrape_coupon_page(campaign_url)
+    if not raw_text:
+        print("❌ ไม่สามารถดึงข้อมูลส่วนลดได้")
+        return
+        
+    print("\n📝 กำลังให้ Gemini ร่ายมนต์แต่งแคปชั่นโปรโมชั่น...")
+    caption = generate_coupon_caption(raw_text, aff_url)
+    print("\n========================================")
+    print("✨ แคปชั่นที่แต่งเสร็จแล้ว:")
+    print("========================================")
+    print(caption)
+    print("========================================\n")
+    
+    while True:
+        post_choice = input("❓ ต้องการโพสต์ลง Facebook หรือไม่? (y = โพสต์เลย / n = ยกเลิก): ").strip().lower()
+        if post_choice in ['y', 'yes', 'n', 'no']:
+            break
+            
+    if post_choice in ['y', 'yes']:
+        print("🚀 กำลังส่งบอทโพสต์ Facebook...")
+        success = post_to_facebook(None, caption)
+        if success:
+            print("🎉 โพสต์โปรโมชั่นขึ้นเพจเรียบร้อย เตรียมรับทรัพย์!")
+        else:
+            print("❌ โพสต์ไม่สำเร็จ ลองก๊อปปี้ไปโพสต์เองก่อนนะครับ")
+    else:
+        print("⏭️ ยกเลิกการโพสต์")
+
 def main():
+
     print("========================================")
     print("🚀 เริ่มระบบ Auto Post AI")
     print("========================================\n")
@@ -399,12 +457,17 @@ def main():
     print("เลือกโหมดการทำงาน:")
     print("1. 🛒 โหมดเซลส์แมน (Shopee Affiliate)")
     print("2. 🎓 โหมดครีเอเตอร์ให้ความรู้ (Auto B-Roll Pexels)")
+    print("3. ✂️ โหมดนักล่าโปรโมชั่น (Coupon Hunter)")
     
     while True:
-        work_mode = input("👉 พิมพ์ 1 หรือ 2: ").strip()
-        if work_mode in ['1', '2']:
+        work_mode = input("👉 พิมพ์ 1, 2 หรือ 3: ").strip()
+        if work_mode in ['1', '2', '3']:
             break
-        print("⚠️ กรุณาพิมพ์ 1 หรือ 2 เท่านั้น")
+        print("⚠️ กรุณาพิมพ์ 1, 2 หรือ 3 เท่านั้น")
+        
+    if work_mode == '3':
+        run_coupon_hunter_mode()
+        sys.exit(0)
     print("\n----------------------------------------")
     
     print("เลือกระบบสร้างเสียงพากย์ (TTS Engine):")

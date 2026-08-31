@@ -223,3 +223,44 @@ def generate_broll_script(topic, tone="สารคดีให้ความ�
             time.sleep(2)
             
     return None
+
+def generate_coupon_caption(raw_text, affiliate_link):
+    import os
+    import sys
+    import google.generativeai as genai
+    
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    genai.configure(api_key=GEMINI_API_KEY)
+    
+    model = genai.GenerativeModel('gemini-3.5-flash-lite')
+    
+    prompt = f"""
+คุณคือก๊อปปี้ไรท์เตอร์สายช้อปปิ้งออนไลน์ 
+ฉันมีข้อความดิบที่ดูดมาจากหน้าแคมเปญส่วนลดของ Shopee (ซึ่งจะมีขยะปนอยู่เยอะ)
+ข้อมูลดิบ:
+'''
+{raw_text[:2000]}
+'''
+
+หน้าที่ของคุณ:
+1. คัดกรองหา "โปรโมชั่นเด็ด" "โค้ดส่วนลด" "เงื่อนไข" เช่น โค้ดส่งฟรี โค้ดลด 50% หรือเงินคืน
+2. นำมาเขียนเป็นแคปชั่น Facebook สไตล์เพจโปรโมชั่น แจกวาร์ป โทนตื่นเต้น ดึงดูด
+3. ใส่ Emoji ให้น่าอ่าน
+4. ต้องจบแคปชั่นด้วยการบอกให้คนกดลิงก์นี้เพื่อไปเก็บโค้ด: {affiliate_link} (ใส่ลิงก์นี้แค่บรรทัดเดียวและครั้งเดียวเท่านั้น ห้ามใส่ลิงก์ซ้ำกัน 2 บรรทัดเด็ดขาด)
+5. ไม่ต้องเกริ่นนำใดๆ ตอบเป็นแคปชั่น Facebook มาเลย
+"""
+    try:
+        response = model.generate_content(prompt)
+        text = response.text
+        # เช็คว่า Gemini เผลอใส่ลิงก์ซ้ำมาหรือไม่
+        if text.count(affiliate_link) > 1:
+            # ลบลิงก์ที่ซ้ำออกทั้งหมด
+            text = text.replace(affiliate_link, "")
+            # เอาช่องว่างส่วนเกินด้านล่างออก
+            text = text.rstrip()
+            # เติมลิงก์กลับเข้าไปทีเดียวตอนจบ
+            text += f"\n👉 {affiliate_link}"
+        return text
+    except Exception as e:
+        print(f"⚠️ เกิดข้อผิดพลาดจาก Gemini: {e}")
+        return f"🔥 รวมโค้ดลับ Shopee ประจำวัน!\nกดเก็บโค้ดด่วนก่อนหมดโควต้า: {affiliate_link}"
