@@ -447,6 +447,79 @@ def run_coupon_hunter_mode():
             print("❌ โพสต์ไม่สำเร็จ ลองก๊อปปี้ไปโพสต์เองก่อนนะครับ")
     else:
         print("⏭️ ยกเลิกการโพสต์")
+def run_media_downloader_mode():
+    import os
+    import time
+    from scraper import scrape_shopee_images, scrape_shopee_video, download_image
+    import requests
+    
+    print("\n--- 📥 โหมดที่ 4: ดูดสื่อ Shopee (ดาวน์โหลดภาพและวิดีโอ) ---")
+    print("ระบบนี้จะช่วยดูดภาพความละเอียดสูงและวิดีโอจากหน้าสินค้า Shopee")
+    print("เพื่อให้คุณนำไปใช้ตัดต่อวิดีโอด้วยตัวเองในโปรแกรมอื่น")
+    
+    url = input("\n🔗 กรุณาแปะลิงก์สินค้า Shopee: ").strip()
+    if not url:
+        print("❌ ยกเลิกการดาวน์โหลด (ไม่ได้ระบุ URL)")
+        return
+        
+    folder_name = input("📁 ตั้งชื่อโฟลเดอร์สำหรับเก็บไฟล์ (กด Enter เพื่อใช้ชื่ออัตโนมัติ): ").strip()
+    if not folder_name:
+        folder_name = f"shopee_media_{int(time.time())}"
+        
+    save_dir = os.path.abspath(os.path.join("midea", "downloads", folder_name))
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+        
+    print(f"\n🚀 กำลังค้นหาข้อมูลจากลิงก์...")
+    
+    # 1. ดูดวิดีโอ
+    print("🎥 กำลังค้นหาวิดีโอ...")
+    video_url = scrape_shopee_video(url)
+    if video_url:
+        print(f"✅ พบวิดีโอ! กำลังดาวน์โหลด...")
+        try:
+            video_path = os.path.join(save_dir, "video.mp4")
+            headers = {"User-Agent": "Mozilla/5.0"}
+            response = requests.get(video_url, headers=headers, stream=True)
+            if response.status_code == 200:
+                with open(video_path, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=1024):
+                        if chunk: f.write(chunk)
+                print(f"💾 โหลดวิดีโอสำเร็จ! -> {video_path}")
+            else:
+                print("❌ โหลดวิดีโอไม่สำเร็จ (เซิร์ฟเวอร์ปฏิเสธ)")
+        except Exception as e:
+            print(f"❌ โหลดวิดีโอพัง: {e}")
+    else:
+        print("⚠️ ไม่พบวิดีโอในสินค้านี้")
+        
+    # 2. ดูดรูปภาพ
+    print("\n🖼️ กำลังค้นหารูปภาพ...")
+    image_urls = scrape_shopee_images(url, max_images=15)
+    
+    if image_urls:
+        print(f"✅ พบรูปภาพ {len(image_urls)} รูป! กำลังดาวน์โหลด...")
+        count = 0
+        for i, img_url in enumerate(image_urls):
+            img_path = os.path.join(save_dir, f"image_{i+1}.jpg")
+            success = download_image(img_url, img_path)
+            if success:
+                count += 1
+                print(f"  [{count}] เซฟรูปสำเร็จ -> image_{i+1}.jpg")
+        print(f"💾 โหลดรูปภาพสำเร็จทั้งหมด {count} รูป!")
+    else:
+        print("⚠️ ไม่พบรูปภาพ หรือเว็บปิดกั้นการดูดข้อมูล")
+        
+    print(f"\n========================================")
+    print(f"🎉 ดาวน์โหลดสื่อเสร็จสมบูรณ์!")
+    print(f"📂 ไฟล์ทั้งหมดถูกเก็บไว้ที่:\n{save_dir}")
+    print(f"========================================")
+    
+    # เปิดโฟลเดอร์ให้ผู้ใช้ดูเลย
+    try:
+        os.startfile(save_dir)
+    except:
+        pass
 
 def main():
 
@@ -458,15 +531,19 @@ def main():
     print("1. 🛒 โหมดเซลส์แมน (Shopee Affiliate)")
     print("2. 🎓 โหมดครีเอเตอร์ให้ความรู้ (Auto B-Roll Pexels)")
     print("3. ✂️ โหมดนักล่าโปรโมชั่น (Coupon Hunter)")
+    print("4. 📥 โหมดดูดสื่อ Shopee (ดาวน์โหลดภาพและวิดีโอเพียวๆ)")
     
     while True:
-        work_mode = input("👉 พิมพ์ 1, 2 หรือ 3: ").strip()
-        if work_mode in ['1', '2', '3']:
+        work_mode = input("👉 พิมพ์ 1, 2, 3 หรือ 4: ").strip()
+        if work_mode in ['1', '2', '3', '4']:
             break
-        print("⚠️ กรุณาพิมพ์ 1, 2 หรือ 3 เท่านั้น")
+        print("⚠️ กรุณาพิมพ์ 1, 2, 3 หรือ 4 เท่านั้น")
         
     if work_mode == '3':
         run_coupon_hunter_mode()
+        sys.exit(0)
+    elif work_mode == '4':
+        run_media_downloader_mode()
         sys.exit(0)
     print("\n----------------------------------------")
     
