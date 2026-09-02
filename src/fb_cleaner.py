@@ -110,29 +110,37 @@ def clean_dead_links(page_url, scroll_limit=15):
                             post.scroll_into_view_if_needed()
                             time.sleep(1)
                             
-                            # หาปุ่ม ... ในโพสต์นั้น (รองรับหลายแบบ)
                             menu_btn = post.locator('div[aria-haspopup="menu"], div[aria-label="การดำเนินการสำหรับโพสต์นี้"], div[aria-label="Actions for this post"]').first
                             if menu_btn.is_visible():
                                 menu_btn.click()
                                 time.sleep(2)
                                 
+                                # กดปุ่ม PageDown และ End เพื่อเลื่อนเมนูลงล่างสุด (แก้ปัญหาเมนูยาวจนมองไม่เห็นปุ่มถังขยะ)
+                                page.keyboard.press("PageDown")
+                                page.keyboard.press("End")
+                                time.sleep(1)
+                                
                                 # หาปุ่ม "ถังขยะ"
                                 trash_btn = page.locator('span:has-text("ถังขยะ"), span:has-text("trash"), span:has-text("ย้ายไปที่ถังขยะ"), span:has-text("Move to trash")').first
-                                if trash_btn.is_visible():
+                                try:
+                                    trash_btn.wait_for(state="attached", timeout=3000)
+                                    trash_btn.scroll_into_view_if_needed()
+                                    time.sleep(1)
                                     trash_btn.click()
                                     time.sleep(2)
                                     
                                     # กดยืนยัน "ย้าย"
                                     confirm_btn = page.locator('div[aria-label="ย้าย"], div[aria-label="Move"]').first
-                                    if confirm_btn.is_visible():
+                                    try:
+                                        confirm_btn.wait_for(state="attached", timeout=3000)
                                         confirm_btn.click()
                                         print("✅ ลบโพสต์สำเร็จ!")
                                         deleted_count += 1
                                         time.sleep(4)
-                                    else:
+                                    except:
                                         print("⚠️ หาปุ่มยืนยันการลบไม่เจอ")
-                                else:
-                                    print("⚠️ หาเมนูย้ายไปถังขยะไม่เจอ")
+                                except:
+                                    print("⚠️ หาเมนูถังขยะไม่เจอ (อาจจะโดนซ่อนอยู่ หรือไม่มีสิทธิ์ลบ)")
                             else:
                                 print("⚠️ หาปุ่ม ... ไม่เจอ")
                         else:
