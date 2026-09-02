@@ -450,7 +450,7 @@ def run_coupon_hunter_mode():
 def run_media_downloader_mode():
     import os
     import time
-    from scraper import scrape_shopee_images, scrape_shopee_video, download_image
+    from scraper import scrape_shopee_images, scrape_shopee_video, download_image, resolve_affiliate_link
     import requests
     
     print("\n--- 📥 โหมดที่ 4: ดูดสื่อ Shopee (ดาวน์โหลดภาพและวิดีโอ) ---")
@@ -462,10 +462,20 @@ def run_media_downloader_mode():
         print("❌ ยกเลิกการดาวน์โหลด (ไม่ได้ระบุ URL)")
         return
         
-    folder_name = input("📁 ตั้งชื่อโฟลเดอร์สำหรับเก็บไฟล์ (กด Enter เพื่อใช้ชื่ออัตโนมัติ): ").strip()
+    folder_name = input("📁 ตั้งชื่อโฟลเดอร์ (กด Enter เพื่อให้ตั้งชื่อตาม รหัสสินค้า-ชื่อสินค้า): ").strip()
+    
     if not folder_name:
-        folder_name = f"shopee_media_{int(time.time())}"
-        
+        print("🔍 กำลังดึงชื่อและรหัสสินค้า...")
+        info = resolve_affiliate_link(url)
+        if info and info['product_id']:
+            # เอาอักขระพิเศษออกให้ปลอดภัยกับชื่อโฟลเดอร์
+            safe_name = "".join(c for c in info['product_name'] if c.isalnum() or c in (' ', '-', '_')).strip()
+            # ตัดชื่อยาวเกินไป
+            safe_name = safe_name[:50]
+            folder_name = f"{info['product_id']}-{safe_name}"
+        else:
+            folder_name = f"shopee_media_{int(time.time())}"
+            
     save_dir = os.path.abspath(os.path.join("midea", "downloads", folder_name))
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
