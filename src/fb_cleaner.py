@@ -1,4 +1,4 @@
-﻿import os
+import os
 import time
 import re
 from playwright.sync_api import sync_playwright
@@ -39,6 +39,7 @@ def clean_dead_links(page_url):
         for scroll in range(5):  # เลื่อนหน้าจอ 5 ครั้งก่อน
             posts = page.locator('div[role="article"]')
             count = posts.count()
+            print(f"👀 เจอโครงสร้างโพสต์บนหน้าจอ {count} โพสต์ (รอบที่ {scroll+1})")
             
             for i in range(count):
                 try:
@@ -46,12 +47,39 @@ def clean_dead_links(page_url):
                     if not post.is_visible(): continue
                         
                     post_text = post.inner_text()
-                    links = re.findall(r'(https://s\.shopee\.co\.th/[A-Za-z0-9]+)', post_text)
+                    
+                    # ปรับ Regex ให้จับลิงก์ที่ไม่มี https:// ด้วย (เพราะเฟสบุ๊คมักจะซ่อน https)
+                    links = re.findall(r'(?:https://)?(s\.shopee\.co\.th/[A-Za-z0-9]+)', post_text)
                     if not links:
-                        links = re.findall(r'(https://shopee\.co\.th/[^\s\n]+)', post_text)
+                        links = re.findall(r'(?:https://)?(shopee\.co\.th/[^\s\n]+)', post_text)
                         
+                    # ถ้าในข้อความมองไม่เห็น (อาจจะโดนซ่อนในคำว่า 'ดูเพิ่มเติม') ให้ไปดึงจากลิงก์ <a> ตรงๆ
+                    if not links:
+                        anchors = post.locator('a').all()
+                        for a in anchors:
+                            href = a.get_attribute('href') or ""
+                            # Facebook มักจะครอบลิงก์ด้วย l.facebook.com/l.php?u=...
+                            import urllib.parse
+                            if "u=" in href:
+                                try:
+                                    parsed = urllib.parse.parse_qs(urllib.parse.urlparse(href).query)
+                                    if 'u' in parsed:
+                                        href = parsed['u'][0]
+                                except:
+                                    pass
+                            
+                            m = re.search(r'(?:https://)?(s\.shopee\.co\.th/[A-Za-z0-9]+)', href)
+                            if not m:
+                                m = re.search(r'(?:https://)?(shopee\.co\.th/[^\s\n]+)', href)
+                            if m:
+                                links.append(m.group(1))
+                                break
+                                
                     if links:
                         target_link = links[0]
+                        if not target_link.startswith("http"):
+                            target_link = "https://" + target_link
+                            
                         if target_link in scanned_urls: continue
                             
                         scanned_urls.add(target_link)
