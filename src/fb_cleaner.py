@@ -39,7 +39,8 @@ def clean_dead_links(page_url, scroll_limit=15):
         deleted_count = 0
         
         for scroll in range(scroll_limit):
-            posts = page.locator('div[role="article"]')
+            # หาโพสต์จาก role="article" หรือที่มี aria-posinset (เฟสบุ๊คชอบเปลี่ยนโค้ดบ่อย)
+            posts = page.locator('div[role="article"], div[aria-posinset]')
             count = posts.count()
             print(f"👀 เจอโครงสร้างโพสต์บนหน้าจอ {count} โพสต์ (รอบที่ {scroll+1})")
             
@@ -47,6 +48,18 @@ def clean_dead_links(page_url, scroll_limit=15):
                 try:
                     post = posts.nth(i)
                     if not post.is_visible(): continue
+                    
+                    # ขยายข้อความ "ดูเพิ่มเติม" ก่อนอ่าน text (ถ้ามี)
+                    try:
+                        see_more_btn = post.locator('text="ดูเพิ่มเติม"').first
+                        if not see_more_btn.is_visible(timeout=500):
+                            see_more_btn = post.locator('text="See more"').first
+                            
+                        if see_more_btn.is_visible(timeout=500):
+                            see_more_btn.click()
+                            time.sleep(1)  # รอให้ข้อความกางออก
+                    except:
+                        pass
                         
                     post_text = post.inner_text()
                     
@@ -92,19 +105,24 @@ def clean_dead_links(page_url, scroll_limit=15):
                         
                         if info is None:
                             print("🚨 คำเตือน: สินค้าไม่มีอยู่จริง! กำลังลบโพสต์...")
+                            
+                            # เลื่อนให้โพสต์อยู่ตรงกลางจอ
                             post.scroll_into_view_if_needed()
                             time.sleep(1)
                             
-                            menu_btn = post.locator('div[aria-haspopup="menu"]').first
+                            # หาปุ่ม ... ในโพสต์นั้น (รองรับหลายแบบ)
+                            menu_btn = post.locator('div[aria-haspopup="menu"], div[aria-label="การดำเนินการสำหรับโพสต์นี้"], div[aria-label="Actions for this post"]').first
                             if menu_btn.is_visible():
                                 menu_btn.click()
                                 time.sleep(2)
                                 
-                                trash_btn = page.locator('span:has-text("ย้ายไปที่ถังขยะ"), span:has-text("Move to trash")').first
+                                # หาปุ่ม "ถังขยะ"
+                                trash_btn = page.locator('span:has-text("ถังขยะ"), span:has-text("trash"), span:has-text("ย้ายไปที่ถังขยะ"), span:has-text("Move to trash")').first
                                 if trash_btn.is_visible():
                                     trash_btn.click()
                                     time.sleep(2)
                                     
+                                    # กดยืนยัน "ย้าย"
                                     confirm_btn = page.locator('div[aria-label="ย้าย"], div[aria-label="Move"]').first
                                     if confirm_btn.is_visible():
                                         confirm_btn.click()
