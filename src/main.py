@@ -550,12 +550,13 @@ def main():
     print("2. 🎓 โหมดครีเอเตอร์ให้ความรู้ (Auto B-Roll Pexels)")
     print("3. ✂️ โหมดนักล่าโปรโมชั่น (Coupon Hunter)")
     print("4. 📥 โหมดดูดสื่อ Shopee (ดาวน์โหลดภาพและวิดีโอเพียวๆ)")
+    print("5. 🧹 โหมดผู้คุม (เช็คและลบโพสต์ลิงก์ตายบนเฟสบุ๊ค)")
     
     while True:
-        work_mode = input("👉 พิมพ์ 1, 2, 3 หรือ 4: ").strip()
-        if work_mode in ['1', '2', '3', '4']:
+        work_mode = input("👉 พิมพ์เลข 1-5: ").strip()
+        if work_mode in ['1', '2', '3', '4', '5']:
             break
-        print("⚠️ กรุณาพิมพ์ 1, 2, 3 หรือ 4 เท่านั้น")
+        print("⚠️ กรุณาพิมพ์เลข 1-5 เท่านั้น")
         
     if work_mode == '3':
         run_coupon_hunter_mode()
@@ -563,6 +564,15 @@ def main():
     elif work_mode == '4':
         run_media_downloader_mode()
         sys.exit(0)
+    elif work_mode == '5':
+        from fb_cleaner import clean_dead_links
+        page_url = input("\n🔗 กรุณาใส่ URL หน้าเพจ Facebook ของคุณ: ").strip()
+        if page_url:
+            clean_dead_links(page_url)
+        else:
+            print("❌ ยกเลิกการสแกน (ไม่ได้ระบุลิงก์เพจ)")
+        sys.exit(0)
+        
     print("\n----------------------------------------")
     
     print("เลือกระบบสร้างเสียงพากย์ (TTS Engine):")
