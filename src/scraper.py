@@ -201,6 +201,11 @@ def resolve_affiliate_link(short_url):
             title = t['content'] if t else ""
             desc = d['content'] if d else ""
             
+            # ตรวจสอบว่าสินค้าถูกลบหรือไม่มีอยู่จริง
+            if "ซื้อขายผ่านมือถือ" in title or title.strip() == "Shopee Thailand":
+                print(f"⚠️ ตรวจพบว่าลิงก์สินค้านี้ 'ไม่มีอยู่จริง' หรือ 'ถูกลบไปแล้ว'")
+                return None
+                
             # ลบคำว่า | Shopee Thailand ออกจากชื่อ
             title = title.replace(" | Shopee Thailand", "").strip()
             

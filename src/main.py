@@ -467,6 +467,10 @@ def run_media_downloader_mode():
     if not folder_name:
         print("🔍 กำลังดึงชื่อและรหัสสินค้า...")
         info = resolve_affiliate_link(url)
+        if info is None:
+            print("❌ ยกเลิกการดาวน์โหลด เนื่องจากสินค้าไม่มีอยู่จริง")
+            return
+            
         if info and info['product_id']:
             # เอาอักขระพิเศษออกให้ปลอดภัยกับชื่อโฟลเดอร์
             safe_name = "".join(c for c in info['product_name'] if c.isalnum() or c in (' ', '-', '_')).strip()
