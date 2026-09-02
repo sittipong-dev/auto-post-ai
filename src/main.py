@@ -464,13 +464,17 @@ def run_media_downloader_mode():
         
     folder_name = input("📁 ตั้งชื่อโฟลเดอร์ (กด Enter เพื่อให้ตั้งชื่อตาม รหัสสินค้า-ชื่อสินค้า): ").strip()
     
+    print("🔍 กำลังแปลผลลิงก์และตรวจสอบสินค้า...")
+    info = resolve_affiliate_link(url)
+    if info is None:
+        print("❌ ยกเลิกการดาวน์โหลด เนื่องจากสินค้าไม่มีอยู่จริง")
+        return
+        
+    # ใช้ URL เต็มแทน URL ย่อ เพื่อให้โปรแกรมดูดภาพได้สำเร็จ
+    if info and info['product_url']:
+        url = info['product_url']
+        
     if not folder_name:
-        print("🔍 กำลังดึงชื่อและรหัสสินค้า...")
-        info = resolve_affiliate_link(url)
-        if info is None:
-            print("❌ ยกเลิกการดาวน์โหลด เนื่องจากสินค้าไม่มีอยู่จริง")
-            return
-            
         if info and info['product_id']:
             # เอาอักขระพิเศษออกให้ปลอดภัยกับชื่อโฟลเดอร์
             safe_name = "".join(c for c in info['product_name'] if c.isalnum() or c in (' ', '-', '_')).strip()
@@ -484,7 +488,7 @@ def run_media_downloader_mode():
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
         
-    print(f"\n🚀 กำลังค้นหาข้อมูลจากลิงก์...")
+    print(f"\n🚀 กำลังค้นหาข้อมูลจากลิงก์: {url}")
     
     # 1. ดูดวิดีโอ
     print("🎥 กำลังค้นหาวิดีโอ...")
