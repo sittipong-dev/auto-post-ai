@@ -4,12 +4,12 @@ import re
 from playwright.sync_api import sync_playwright
 from scraper import resolve_affiliate_link
 
-def clean_dead_links(page_url):
-    print("\n🧹 เริ่มโหมดทำความสะอาดเพจ (Dead Link Cleaner)")
+def clean_dead_links(page_url, scroll_limit=15):
+    print(f"\n🧹 เริ่มโหมดทำความสะอาดเพจ (ตรวจสอบ {scroll_limit} ครั้ง)")
     profile_dir = os.path.abspath(os.path.join("data", "browser_profile"))
     
     if not os.path.exists(profile_dir):
-        print("❌ ไม่พบโปรไฟล์ Facebook กรุณารันเมนูตั้งค่าล็อกอินก่อน")
+        print("❌ ไม่พบโปรไฟล์ Facebook กรุณารันเมนูตั้งค่าล็อกอินก่อน (setup_login.py)")
         return False
         
     with sync_playwright() as p:
@@ -26,6 +26,7 @@ def clean_dead_links(page_url):
         page.goto(page_url)
         time.sleep(5)
         
+        # Check login status
         if "login" in page.url:
             print("❌ ดูเหมือนจะยังไม่ได้ล็อกอิน กรุณาล็อกอินก่อน")
             browser.close()
@@ -33,10 +34,11 @@ def clean_dead_links(page_url):
             
         print("🔍 กำลังสแกนโพสต์ในเพจ...")
         
+        # ค้นหาโพสต์ (Facebook มักใช้ role="article" สำหรับโพสต์แต่ละอัน)
         scanned_urls = set()
         deleted_count = 0
         
-        for scroll in range(5):  # เลื่อนหน้าจอ 5 ครั้งก่อน
+        for scroll in range(scroll_limit):
             posts = page.locator('div[role="article"]')
             count = posts.count()
             print(f"👀 เจอโครงสร้างโพสต์บนหน้าจอ {count} โพสต์ (รอบที่ {scroll+1})")
@@ -120,7 +122,7 @@ def clean_dead_links(page_url):
                 except Exception as e:
                     print(f"Error checking post: {e}")
                     
-            print(f"⬇️ เลื่อนหน้าจอลง... ({scroll+1}/5)")
+            print(f"⬇️ เลื่อนหน้าจอลง... ({scroll+1}/{scroll_limit})")
             page.mouse.wheel(0, 1000)
             time.sleep(3)
             

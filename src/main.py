@@ -568,7 +568,9 @@ def main():
         from fb_cleaner import clean_dead_links
         page_url = input("\n🔗 กรุณาใส่ URL หน้าเพจ Facebook ของคุณ: ").strip()
         if page_url:
-            clean_dead_links(page_url)
+            scrolls_input = input("🔄 ต้องการให้บอทเลื่อนหน้าจอตรวจสอบกี่ครั้ง? (กด Enter เพื่อใช้ค่าแนะนำ 15 ครั้ง): ").strip()
+            scrolls = 15 if not scrolls_input else int(scrolls_input)
+            clean_dead_links(page_url, scroll_limit=scrolls)
         else:
             print("❌ ยกเลิกการสแกน (ไม่ได้ระบุลิงก์เพจ)")
         sys.exit(0)
