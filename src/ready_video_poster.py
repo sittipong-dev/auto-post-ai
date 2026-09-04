@@ -12,6 +12,9 @@ def ensure_dir(path):
 
 def clean_path(path_str):
     path_str = path_str.strip()
+    # ตัด & ที่ PowerShell ชอบแถมมาเวลาลากไฟล์
+    if path_str.startswith("& "):
+        path_str = path_str[2:].strip()
     if path_str.startswith('"') and path_str.endswith('"'):
         path_str = path_str[1:-1]
     if path_str.startswith("'") and path_str.endswith("'"):
