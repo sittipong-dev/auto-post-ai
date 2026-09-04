@@ -286,8 +286,11 @@ def post_to_facebook(video_path, caption, affiliate_url=None):
             if affiliate_url:
                 print("🛒 กำลังปักตะกร้า Affiliate ลงในคลิป Reels...")
                 try:
-                    # หาเมนูเพิ่มสินค้า
-                    add_product_btn = page.locator('text="เพิ่มสินค้า", text="Add product", text="Add products"').last
+                    # หาเมนูเพิ่มสินค้า (รองรับทั้งภาษาไทยและอังกฤษ)
+                    add_product_btn = page.locator('div[role="button"]:has-text("เพิ่มสินค้า"), div[role="button"]:has-text("Add product"), div:has-text("เพิ่มสินค้าลงในคลิป")').last
+                    if not add_product_btn.is_visible(timeout=2000):
+                        add_product_btn = page.get_by_text("เพิ่มสินค้า", exact=True).first
+                        
                     if add_product_btn.is_visible(timeout=5000):
                         add_product_btn.click()
                         time.sleep(3)
