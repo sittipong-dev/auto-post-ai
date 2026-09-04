@@ -295,45 +295,53 @@ def post_to_facebook(video_path, caption, affiliate_url=None):
                         add_product_btn.click()
                         time.sleep(3)
                         
-                        # หากล่องหน้าต่างที่เด้งขึ้นมา
-                        modal = page.locator('div[role="dialog"]').last
-                        if modal.is_visible(timeout=5000):
-                            # รอให้ช่อง input ปรากฏ
+                        # รอให้ระบบดึงหน้าต่างขึ้นมา
+                        time.sleep(3)
+                        
+                        # หาช่องกรอกทั้งหมดในหน้าจอที่เป็น text input
+                        all_inputs = page.locator('input').all()
+                        text_inputs = []
+                        for inp in all_inputs:
                             try:
-                                modal.locator('input:not([type="hidden"]), textarea').first.wait_for(state="visible", timeout=5000)
-                            except:
-                                pass
-                                
-                            # หาช่องกรอกข้อความที่มองเห็นได้
-                            inputs = modal.locator('input:not([type="hidden"]), textarea').all()
+                                if inp.is_visible() and inp.get_attribute("type") not in ["hidden", "file", "checkbox", "radio"]:
+                                    text_inputs.append(inp)
+                            except: pass
                             
-                            visible_inputs = []
-                            for inp in inputs:
-                                if inp.is_visible():
-                                    visible_inputs.append(inp)
-                                    
-                            if len(visible_inputs) >= 2:
-                                # ช่องแรกคือ URL
-                                visible_inputs[0].fill(affiliate_url)
-                                time.sleep(2) # รอให้ระบบ Facebook โหลดลิงก์และขึ้นติ๊กถูกสีเขียว
-                                
-                                # ช่องสองคือ ชื่อลิงก์
-                                visible_inputs[1].fill("กดซื้อสินค้าที่นี่ค่ะ")
-                                time.sleep(1)
-                            elif len(visible_inputs) == 1:
-                                # ถ้าเจอช่องเดียว สันนิษฐานว่าเป็นช่อง URL
-                                visible_inputs[0].fill(affiliate_url)
-                                time.sleep(2)
-                            else:
-                                print(f"⚠️ หาช่องกรอกลิงก์ไม่เจอ (พบ {len(visible_inputs)} ช่อง)")
+                        if len(text_inputs) >= 2:
+                            # ช่องรองสุดท้ายคือ URL
+                            text_inputs[-2].fill(affiliate_url)
+                            time.sleep(3) # รอให้ติ๊กถูกสีเขียวขึ้น
                             
-                            # หาปุ่ม "บันทึก" หรือ "Save" ในหน้าต่างนั้น
-                            save_btn = modal.locator('div[role="button"]:has-text("บันทึก"), div[role="button"]:has-text("Save"), button:has-text("บันทึก"), button:has-text("Save")').last
-                            save_btn.click()
-                            print("✅ ปักตะกร้า Affiliate ลงคลิป Reels สำเร็จ!")
+                            # ช่องสุดท้ายคือ ชื่อลิงก์
+                            text_inputs[-1].fill("กดซื้อสินค้าที่นี่ค่ะ")
+                            time.sleep(1)
+                        elif len(text_inputs) == 1:
+                            text_inputs[-1].fill(affiliate_url)
                             time.sleep(3)
                         else:
-                            print("⚠️ หน้าต่างเพิ่มสินค้าไม่เด้งขึ้นมา")
+                            print(f"⚠️ หาช่องกรอกลิงก์ไม่เจอ (พบ {len(text_inputs)} ช่อง) กำลังพยายามใช้ช่องทางสำรอง...")
+                            # ช่องทางสำรอง: ลองใช้ get_by_role
+                            try:
+                                textboxes = page.get_by_role("textbox").all()
+                                if len(textboxes) >= 2:
+                                    textboxes[-2].fill(affiliate_url)
+                                    time.sleep(3)
+                                    textboxes[-1].fill("กดซื้อสินค้าที่นี่ค่ะ")
+                            except: pass
+                            
+                        # หาปุ่ม "บันทึก" หรือ "Save" ทั้งหมดบนหน้าจอ แล้วกดตัวสุดท้าย (มักจะเป็นของ Modal ล่าสุด)
+                        try:
+                            save_btn = page.locator('div[role="button"]:has-text("บันทึก"), div[role="button"]:has-text("Save"), button:has-text("บันทึก"), button:has-text("Save")').last
+                            save_btn.click(timeout=5000)
+                            print("✅ ปักตะกร้า Affiliate ลงคลิป Reels สำเร็จ!")
+                            time.sleep(3)
+                        except Exception as e:
+                            print(f"⚠️ กดปุ่มบันทึกไม่ได้: {e}")
+                            # ลองกด Enter แทนเผื่อว่าปุ่มกดยาก
+                            try:
+                                page.keyboard.press("Enter")
+                                time.sleep(2)
+                            except: pass
                     else:
                         print("⚠️ หาเมนู 'เพิ่มสินค้า' ไม่เจอ (เพจอาจจะยังไม่มีฟีเจอร์นี้) -> ข้ามการปักตะกร้า")
                 except Exception as e:
