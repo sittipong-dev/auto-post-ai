@@ -551,12 +551,13 @@ def main():
     print("3. ✂️ โหมดนักล่าโปรโมชั่น (Coupon Hunter)")
     print("4. 📥 โหมดดูดสื่อ Shopee (ดาวน์โหลดภาพและวิดีโอเพียวๆ)")
     print("5. 🧹 โหมดผู้คุม (เช็คและลบโพสต์ลิงก์ตายบนเฟสบุ๊ค)")
+    print("6. 🎬 โหมดโพสต์วิดีโอสำเร็จรูป (มีวิดีโออยู่แล้ว ให้ AI คิดแคปชั่น + โพสต์)")
     
     while True:
-        work_mode = input("👉 พิมพ์เลข 1-5: ").strip()
-        if work_mode in ['1', '2', '3', '4', '5']:
+        work_mode = input("👉 พิมพ์เลข 1-6: ").strip()
+        if work_mode in ['1', '2', '3', '4', '5', '6']:
             break
-        print("⚠️ กรุณาพิมพ์เลข 1-5 เท่านั้น")
+        print("⚠️ กรุณาพิมพ์เลข 1-6 เท่านั้น")
         
     if work_mode == '3':
         run_coupon_hunter_mode()
@@ -573,6 +574,23 @@ def main():
             clean_dead_links(page_url, scroll_limit=scrolls)
         else:
             print("❌ ยกเลิกการสแกน (ไม่ได้ระบุลิงก์เพจ)")
+        sys.exit(0)
+    elif work_mode == '6':
+        print("\n----------------------------------------")
+        print("เลือกระบบโพสต์วิดีโอ:")
+        print("1. 🎬 โพสต์ทีละคลิป (ทำด้วยมือทีละอัน)")
+        print("2. 📦 โพสต์แบบเหมาๆ รวดเดียว (ดึงจากไฟล์ Excel)")
+        while True:
+            sub_mode = input("👉 พิมพ์ 1 หรือ 2: ").strip()
+            if sub_mode in ['1', '2']:
+                break
+            print("⚠️ กรุณาพิมพ์ 1 หรือ 2 เท่านั้น")
+            
+        from ready_video_poster import run_ready_video_single, run_ready_video_batch
+        if sub_mode == '1':
+            run_ready_video_single()
+        else:
+            run_ready_video_batch()
         sys.exit(0)
         
     print("\n----------------------------------------")

@@ -264,3 +264,46 @@ def generate_coupon_caption(raw_text, affiliate_link):
     except Exception as e:
         print(f"⚠️ เกิดข้อผิดพลาดจาก Gemini: {e}")
         return f"🔥 รวมโค้ดลับ Shopee ประจำวัน!\nกดเก็บโค้ดด่วนก่อนหมดโควต้า: {affiliate_link}"
+
+def generate_video_caption(product_name, product_desc, affiliate_link, tone="น่าสนใจ"):
+    import os
+    import google.generativeai as genai
+    import re
+    
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    if not GEMINI_API_KEY:
+        print("❌ ไม่พบ GEMINI_API_KEY")
+        return f"{product_name}\n\n👉 พิกัดสั่งซื้อ: {affiliate_link}"
+        
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    
+    prompt = f"""
+คุณคือก๊อปปี้ไรท์เตอร์มืออาชีพสำหรับเขียนแคปชั่นขายของบน Facebook เพจ
+ฉันมีวิดีโอรีวิวสินค้า 1 คลิป และต้องการแคปชั่นสำหรับโพสต์คู่วิดีโอนี้
+
+ชื่อสินค้า: {product_name}
+รายละเอียด:
+'''
+{product_desc[:2000]}
+'''
+
+หน้าที่ของคุณ:
+1. เขียนแคปชั่นสไตล์ "{tone}" ดึงดูดให้คนอยากดูคลิปและกดสั่งซื้อ
+2. สรุปจุดเด่นของสินค้าให้อ่านง่าย สบายตา (ใช้ bullet point แบบอิโมจิ)
+3. ใส่ Hashtag ที่เกี่ยวข้องประมาณ 3-5 แท็ก ไว้บรรทัดล่างสุด
+4. **ห้าม** ใส่ลิงก์ใดๆ ลงในข้อความที่คุณเขียนเด็ดขาด (ฉันจะเติมลิงก์ Shopee ให้เองในภายหลัง)
+5. **ห้าม** พิมพ์คำว่า "ลิงก์" หรือ "Link" ทิ้งไว้ให้เติม
+
+ขอแคปชั่นล้วนๆ พร้อมโพสต์ได้เลย
+"""
+    try:
+        response = model.generate_content(prompt)
+        text = response.text.strip()
+        # Remove any stray URLs
+        text = re.sub(r'https?://[^\s]+', '', text).strip()
+        final_caption = f"{text}\n\n📍 พิกัดสั่งซื้อราคาพิเศษ กดลิงก์นี้ได้เลยครับ 👇\n👉 {affiliate_link}"
+        return final_caption
+    except Exception as e:
+        print(f"❌ Gemini API Error: {e}")
+        return f"{product_name}\n\n📍 พิกัดสั่งซื้อ: {affiliate_link}"
