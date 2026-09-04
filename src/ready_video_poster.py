@@ -50,7 +50,7 @@ def process_single_ready_video(video_path, affiliate_url, tone="ตื่นเ�
     
     print("\n[3/3] 📤 กำลังอัปโหลดวิดีโอลง Facebook...")
     
-    if post_to_facebook(video_path, caption):
+    if post_to_facebook(video_path, caption, affiliate_url):
         print("🎉 โพสต์วิดีโอสำเร็จ!")
         return True
     else:

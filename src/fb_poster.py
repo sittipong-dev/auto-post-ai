@@ -282,7 +282,42 @@ def post_to_facebook(video_path, caption, affiliate_url=None):
             except Exception as e:
                 print(f"⚠️ หาช่องแคปชั่นไม่เจอ (Facebook อาจเปลี่ยนโครงสร้าง): {e}")
 
-            # 4. กดปุ่ม Publish
+            # 4. ปักตะกร้า Affiliate (ถ้ามีลิงก์)
+            if affiliate_url:
+                print("🛒 กำลังปักตะกร้า Affiliate ลงในคลิป Reels...")
+                try:
+                    # หาเมนูเพิ่มสินค้า
+                    add_product_btn = page.locator('text="เพิ่มสินค้า", text="Add product", text="Add products"').last
+                    if add_product_btn.is_visible(timeout=5000):
+                        add_product_btn.click()
+                        time.sleep(3)
+                        
+                        # หากล่องหน้าต่างที่เด้งขึ้นมา
+                        modal = page.locator('div[role="dialog"]').last
+                        if modal.is_visible(timeout=5000):
+                            inputs = modal.locator('input')
+                            
+                            # ช่องแรกคือ URL
+                            inputs.nth(0).fill(affiliate_url)
+                            time.sleep(2) # รอให้ระบบ Facebook โหลดลิงก์และขึ้นติ๊กถูกสีเขียว
+                            
+                            # ช่องสองคือ ชื่อลิงก์
+                            inputs.nth(1).fill("กดซื้อสินค้าที่นี่ค่ะ")
+                            time.sleep(1)
+                            
+                            # หาปุ่ม "บันทึก" หรือ "Save" ในหน้าต่างนั้น
+                            save_btn = modal.locator('div[role="button"]:has-text("บันทึก"), div[role="button"]:has-text("Save"), button:has-text("บันทึก"), button:has-text("Save")').last
+                            save_btn.click()
+                            print("✅ ปักตะกร้า Affiliate ลงคลิป Reels สำเร็จ!")
+                            time.sleep(3)
+                        else:
+                            print("⚠️ หน้าต่างเพิ่มสินค้าไม่เด้งขึ้นมา")
+                    else:
+                        print("⚠️ หาเมนู 'เพิ่มสินค้า' ไม่เจอ (เพจอาจจะยังไม่มีฟีเจอร์นี้) -> ข้ามการปักตะกร้า")
+                except Exception as e:
+                    print(f"⚠️ เกิดข้อผิดพลาดตอนปักตะกร้า: {e}")
+
+            # 5. กดปุ่ม Publish
             print("กำลังกดปุ่ม เผยแพร่ (Publish)...")
             try:
                 publish_btn = page.get_by_role("button", name=re.compile(r"Publish|เผยแพร่|Post|โพสต์|Share|แชร์", re.IGNORECASE)).last
