@@ -1,11 +1,14 @@
-﻿import os
+import os
 import sys
 import time
 import pandas as pd
 from scraper import resolve_affiliate_link
 from ai_gen import generate_video_caption
 from fb_poster import post_to_facebook
-from utils import ensure_dir
+
+def ensure_dir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 def clean_path(path_str):
     path_str = path_str.strip()
