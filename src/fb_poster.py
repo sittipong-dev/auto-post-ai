@@ -298,15 +298,34 @@ def post_to_facebook(video_path, caption, affiliate_url=None):
                         # หากล่องหน้าต่างที่เด้งขึ้นมา
                         modal = page.locator('div[role="dialog"]').last
                         if modal.is_visible(timeout=5000):
-                            inputs = modal.locator('input')
+                            # รอให้ช่อง input ปรากฏ
+                            try:
+                                modal.locator('input:not([type="hidden"]), textarea').first.wait_for(state="visible", timeout=5000)
+                            except:
+                                pass
+                                
+                            # หาช่องกรอกข้อความที่มองเห็นได้
+                            inputs = modal.locator('input:not([type="hidden"]), textarea').all()
                             
-                            # ช่องแรกคือ URL
-                            inputs.nth(0).fill(affiliate_url)
-                            time.sleep(2) # รอให้ระบบ Facebook โหลดลิงก์และขึ้นติ๊กถูกสีเขียว
-                            
-                            # ช่องสองคือ ชื่อลิงก์
-                            inputs.nth(1).fill("กดซื้อสินค้าที่นี่ค่ะ")
-                            time.sleep(1)
+                            visible_inputs = []
+                            for inp in inputs:
+                                if inp.is_visible():
+                                    visible_inputs.append(inp)
+                                    
+                            if len(visible_inputs) >= 2:
+                                # ช่องแรกคือ URL
+                                visible_inputs[0].fill(affiliate_url)
+                                time.sleep(2) # รอให้ระบบ Facebook โหลดลิงก์และขึ้นติ๊กถูกสีเขียว
+                                
+                                # ช่องสองคือ ชื่อลิงก์
+                                visible_inputs[1].fill("กดซื้อสินค้าที่นี่ค่ะ")
+                                time.sleep(1)
+                            elif len(visible_inputs) == 1:
+                                # ถ้าเจอช่องเดียว สันนิษฐานว่าเป็นช่อง URL
+                                visible_inputs[0].fill(affiliate_url)
+                                time.sleep(2)
+                            else:
+                                print(f"⚠️ หาช่องกรอกลิงก์ไม่เจอ (พบ {len(visible_inputs)} ช่อง)")
                             
                             # หาปุ่ม "บันทึก" หรือ "Save" ในหน้าต่างนั้น
                             save_btn = modal.locator('div[role="button"]:has-text("บันทึก"), div[role="button"]:has-text("Save"), button:has-text("บันทึก"), button:has-text("Save")').last
