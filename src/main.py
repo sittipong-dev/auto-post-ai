@@ -666,7 +666,17 @@ def main():
             elif mode_input == '3': image_mode = "video"
             break
             
-    audio_mode = "voice_only"
+    print("\n----------------------------------------")
+    print("เลือกรูปแบบเสียงในคลิป:")
+    print("1. 🗣️ เสียงพากย์ AI อย่างเดียว (Voice only)")
+    print("2. 🗣️+🎵 เสียงพากย์ AI + เพลงประกอบ (Voice + BGM)")
+    print("3. 🎵 เพลงประกอบอย่างเดียว (BGM only - ไม่มีเสียงพูด)")
+    while True:
+        audio_input = input("👉 พิมพ์ 1, 2 หรือ 3: ").strip()
+        if audio_input == '1': audio_mode = "voice_only"; break
+        elif audio_input == '2': audio_mode = "voice_and_bgm"; break
+        elif audio_input == '3': audio_mode = "bgm_only"; break
+        print("⚠️ กรุณาพิมพ์ 1, 2 หรือ 3 เท่านั้น")
     
     posted_history = load_history()
     csv_path = get_latest_csv("data")
