@@ -276,7 +276,6 @@ def generate_video_caption(product_name, product_desc, affiliate_link, tone="น
         return f"{product_name}\n\n👉 พิกัดสั่งซื้อ: {affiliate_link}"
         
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-3.5-flash-lite')
     
     prompt = f"""
 คุณคือก๊อปปี้ไรท์เตอร์มืออาชีพสำหรับเขียนแคปชั่นขายของบน Facebook เพจ
@@ -298,12 +297,14 @@ def generate_video_caption(product_name, product_desc, affiliate_link, tone="น
 ขอแคปชั่นล้วนๆ พร้อมโพสต์ได้เลย
 """
     try:
+        model = genai.GenerativeModel('gemini-3.5-flash-lite')
         response = model.generate_content(prompt)
         text = response.text.strip()
-        # Remove any stray URLs
-        text = re.sub(r'https?://[^\s]+', '', text).strip()
-        final_caption = f"{text}\n\n📍 พิกัดสั่งซื้อราคาพิเศษ กดลิงก์นี้ได้เลยครับ 👇\n👉 {affiliate_link}"
-        return final_caption
     except Exception as e:
         print(f"❌ Gemini API Error: {e}")
         return f"{product_name}\n\n📍 พิกัดสั่งซื้อ: {affiliate_link}"
+
+    # Remove any stray URLs
+    text = re.sub(r'https?://[^\s]+', '', text).strip()
+    final_caption = f"{text}\n\n📍 พิกัดสั่งซื้อราคาพิเศษ กดลิงก์นี้ได้เลยครับ 👇\n👉 {affiliate_link}"
+    return final_caption
