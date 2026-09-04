@@ -276,7 +276,7 @@ def generate_video_caption(product_name, product_desc, affiliate_link, tone="น
         return f"{product_name}\n\n👉 พิกัดสั่งซื้อ: {affiliate_link}"
         
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-3.5-flash-lite')
     
     prompt = f"""
 คุณคือก๊อปปี้ไรท์เตอร์มืออาชีพสำหรับเขียนแคปชั่นขายของบน Facebook เพจ
