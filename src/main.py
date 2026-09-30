@@ -462,6 +462,7 @@ def run_media_downloader_mode():
         print("❌ ยกเลิกการดาวน์โหลด (ไม่ได้ระบุ URL)")
         return
         
+    original_input_url = url
     folder_name = input("📁 ตั้งชื่อโฟลเดอร์ (กด Enter เพื่อให้ตั้งชื่อตาม รหัสสินค้า-ชื่อสินค้า): ").strip()
     
     print("🔍 กำลังแปลผลลิงก์และตรวจสอบสินค้า...")
@@ -528,8 +529,42 @@ def run_media_downloader_mode():
     else:
         print("⚠️ ไม่พบรูปภาพ หรือเว็บปิดกั้นการดูดข้อมูล")
         
+    # 3. บันทึกรายละเอียดสินค้าและสร้างแคปชั่นลงไฟล์ Text
+    print("\n📝 กำลังบันทึกรายละเอียดสินค้าและสร้างแคปชั่น...")
+    try:
+        from ai_gen import generate_video_caption
+        
+        product_title = info.get('product_name', 'ไม่มีชื่อสินค้า') if info else 'ไม่มีชื่อสินค้า'
+        product_desc = info.get('product_desc', 'ไม่มีรายละเอียด') if info else 'ไม่มีรายละเอียด'
+        product_id = info.get('product_id', '-') if info else '-'
+        product_link = original_input_url
+        
+        print("🧠 ให้ AI (Gemini) ช่วยร่างแคปชั่นสำหรับโพสต์...")
+        caption = generate_video_caption(product_title, product_desc, product_link, tone="ตื่นเต้น ป้ายยาหนักๆ ให้รีบซื้อทันที")
+        
+        txt_path = os.path.join(save_dir, "product_info.txt")
+        with open(txt_path, "w", encoding="utf-8") as f:
+            f.write("========================================\n")
+            f.write("📌 ข้อมูลสินค้า Shopee\n")
+            f.write("========================================\n\n")
+            f.write(f"ชื่อสินค้า: {product_title}\n")
+            f.write(f"รหัสสินค้า: {product_id}\n")
+            f.write(f"ลิงก์สินค้า: {product_link}\n\n")
+            f.write("----------------------------------------\n")
+            f.write("📝 รายละเอียดสินค้า (จาก Shopee):\n")
+            f.write("----------------------------------------\n")
+            f.write(f"{product_desc}\n\n")
+            f.write("========================================\n")
+            f.write("✨ แคปชั่นแนะนำพร้อมโพสต์ (AI Generated):\n")
+            f.write("========================================\n")
+            f.write(f"{caption}\n")
+            
+        print(f"💾 บันทึกไฟล์ข้อความสำเร็จ! -> product_info.txt")
+    except Exception as e:
+        print(f"⚠️ เกิดข้อผิดพลาดในการบันทึกไฟล์ข้อความ: {e}")
+        
     print(f"\n========================================")
-    print(f"🎉 ดาวน์โหลดสื่อเสร็จสมบูรณ์!")
+    print(f"🎉 ดาวน์โหลดสื่อและข้อมูลเสร็จสมบูรณ์!")
     print(f"📂 ไฟล์ทั้งหมดถูกเก็บไว้ที่:\n{save_dir}")
     print(f"========================================")
     
